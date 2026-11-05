@@ -29,6 +29,7 @@ const label = (prop, v) => (v ? (names.labels[prop] && names.labels[prop][v]) ||
 
 function isOpen(p) {
   if (!p.consent_owner) return false;
+  if (p.risc_la_collected !== 'Yes') return false;
   if (cfg.completedConsentValues.includes(p.consent__status)) return false;
   if (cfg.excludedStageIds.includes(p.dealstage)) return false;
   const stage = (names.stages[p.dealstage] || '').toLowerCase();
