@@ -17,7 +17,8 @@ app.http('hubspotDeal', {
   authLevel: 'anonymous',
   route: 'hubspot/deal',
   handler: async (req, context) => {
-    if (!sameKey(req.headers.get('x-tracker-key'), cfg.webhookKey())) {
+           const given = req.headers.get('x-tracker-key') || req.headers.get('trackerkey') || req.query.get('key');
+       if (!sameKey(given, cfg.webhookKey())) {
       context.warn('Rejected a deal update with a missing or wrong key.');
       return { status: 400, jsonBody: { error: 'Missing or wrong x-tracker-key header.' } };
     }
