@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Consent Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="bar">
+    <div class="bar-in">
+      <h1>Consent Tracker</h1>
+      <p class="sync" id="sync">Loading deals</p>
+      <div class="bar-actions">
+        <button type="button" id="refresh">Reload</button>
+        <span class="who" id="who"></span>
+        <a class="signout" href="/.auth/logout?post_logout_redirect_uri=/">Sign out</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <nav class="tabs" role="tablist" aria-label="Case phase">
+      <button type="button" role="tab" id="tab-prefiling" aria-controls="panel" aria-selected="true" data-tab="prefiling">Pre-filing <span class="count" data-count="prefiling"></span></button>
+      <button type="button" role="tab" id="tab-filed" aria-controls="panel" aria-selected="false" data-tab="filed">Filed cases <span class="count" data-count="filed"></span></button>
+    </nav>
+
+    <section id="panel" role="tabpanel" aria-labelledby="tab-prefiling">
+      <p class="rule" id="rule"></p>
+
+      <div class="tiles" id="tiles"></div>
+
+      <div class="breakdowns">
+        <section class="breakdown">
+          <h2>By consent status</h2>
+          <div class="bars" id="by-status"></div>
+        </section>
+        <section class="breakdown">
+          <h2>By consent owner</h2>
+          <div class="bars" id="by-owner"></div>
+        </section>
+      </div>
+
+      <section class="deals">
+        <div class="filters">
+          <input type="search" id="q" placeholder="Search deal, client or Clio matter" aria-label="Search">
+          <select id="f-urgency" aria-label="Urgency"></select>
+          <select id="f-owner" aria-label="Consent owner"></select>
+          <select id="f-status" aria-label="Consent status"></select>
+          <label class="check"><input type="checkbox" id="f-closed"> Hide deals closed in HubSpot</label>
+          <button type="button" id="clear">Clear filters</button>
+          <button type="button" id="csv">Download CSV</button>
+          <span class="shown" id="shown"></span>
+        </div>
+        <div class="tablebox">
+          <table id="table">
+            <thead id="thead"></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <p class="hint">Select a deal to see its Clio contacts. HubSpot sends each change to this page as it happens.</p>
+      </section>
+    </section>
+  </main>
+</body>
+</html>

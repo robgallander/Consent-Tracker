@@ -1,0 +1,7 @@
+:root { color-scheme: light dark; --ink: #1d2733; --paper: #f6f7f9; --muted: #5d6a79; }
+@media (prefers-color-scheme: dark) { :root { --ink: #e6eaef; --paper: #12171d; --muted: #9aa6b4; } }
+body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--paper); color: var(--ink); font: 16px/1.6 system-ui, sans-serif; }
+main { max-width: 34rem; padding: 2rem; }
+h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 .75rem; }
+p { color: var(--muted); }
+a { color: var(--ink); }
