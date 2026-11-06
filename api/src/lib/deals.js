@@ -29,7 +29,7 @@ const label = (prop, v) => (v ? (names.labels[prop] && names.labels[prop][v]) ||
 
 function isOpen(p) {
   if (!p.consent_owner) return false;
-  if (p.risc_la_collected !== 'Yes') return false;
+  if (p.risc_la_collected !== 'Yes') return false; // only deals with the RISC/LA collected
   if (cfg.completedConsentValues.includes(p.consent__status)) return false;
   if (cfg.excludedStageIds.includes(p.dealstage)) return false;
   const stage = (names.stages[p.dealstage] || '').toLowerCase();
@@ -66,6 +66,9 @@ function toRows(deals, tab, today = new Date()) {
       dateFiled,
       trialDate: trial,
       clioMatter: p.clio_matter || '',
+      plaintiff1: (p.plaintiff_1 || '').trim(),
+      plaintiff2: (p.plaintiff_2 || '').trim(),
+      pointOfContact: (p.point_of_contact || '').trim(),
       clioMatterId: /^\d+$/.test(p.matter_id || '') ? p.matter_id : '',
       urgency: settlement || trialSoon ? 'High' : filed ? 'Medium' : 'Low',
       urgencyReason: [settlement ? 'Settlement pipeline' : '', trialSoon ? `Trial ${trial}` : ''].filter(Boolean).join(', '),

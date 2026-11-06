@@ -5,6 +5,7 @@ const COLUMNS = {
     ['urgency', 'Urgency', ''], ['deal', 'Deal', 'Deal'], ['stage', 'Deal stage', 'Deal'], ['owner', 'Consent owner', 'Deal'],
     ['status', 'Status', 'Client'], ['consentStatus', 'Consent status', 'Client'], ['retainer', 'Retainer received', 'Client'], ['howConsent', 'How consent obtained', 'Client'],
     ['riscLa', 'RISC/LA collected', 'Documents'], ['governmentId', 'Government ID', 'Documents'], ['correctionNeeded', 'Correction RA/DAR needed', 'Documents'],
+    ['plaintiff1', 'Plaintiff 1', 'Contacts'], ['plaintiff2', 'Plaintiff 2', 'Contacts'], ['pointOfContact', 'Point of contact', 'Contacts'],
   ],
 };
 COLUMNS.filed = [
@@ -14,8 +15,8 @@ COLUMNS.filed = [
 ];
 
 const RULES = {
-  prefiling: 'Deals with a Consent Owner and no Date Matter Filed whose Consent Status isn’t yet “ALL Parties Consented” or “No Consent Needed”. Urgency is High in the Settlement pipeline or with a trial in the next 90 days, otherwise Low.',
-  filed: 'Deals with a Consent Owner and a Date Matter Filed whose Consent Status isn’t yet “ALL Parties Consented” or “No Consent Needed”. Urgency is High in the Settlement pipeline or with a trial in the next 90 days, otherwise Medium.',
+  prefiling: 'Deals with a Consent Owner, RISC/LA Collected, and no Date Matter Filed whose Consent Status isn’t yet “ALL Parties Consented” or “No Consent Needed”. Urgency is High in the Settlement pipeline or with a trial in the next 90 days, otherwise Low.',
+  filed: 'Deals with a Consent Owner, RISC/LA Collected, and a Date Matter Filed whose Consent Status isn’t yet “ALL Parties Consented” or “No Consent Needed”. Urgency is High in the Settlement pipeline or with a trial in the next 90 days, otherwise Medium.',
 };
 const RANK = { High: 0, Medium: 1, Low: 2 };
 const fmt = new Intl.NumberFormat('en-US');
@@ -28,7 +29,6 @@ const state = {
   open: null,
   filters: { prefiling: {}, filed: {} },
   sort: { prefiling: { col: 'urgency', dir: 1 }, filed: { col: 'urgency', dir: 1 } },
-  clio: new Map(),
 };
 
 function el(tag, attrs = {}, ...children) {
@@ -74,7 +74,7 @@ function rowsFor(tab) {
     (!f.owner || (r.owner || 'Not set') === f.owner) &&
     (!f.status || (r.consentStatus || 'Not set') === f.status) &&
     (!f.hideClosed || !r.closed) &&
-    (!q || `${r.deal} ${r.clioMatter} ${r.owner}`.toLowerCase().includes(q)));
+    (!q || `${r.deal} ${r.clioMatter} ${r.owner} ${r.plaintiff1} ${r.plaintiff2} ${r.pointOfContact}`.toLowerCase().includes(q)));
   const { col, dir } = state.sort[tab];
   const key = (r) => (col === 'urgency' ? String(RANK[r.urgency]) : String(r[col] || '\uffff'));
   rows = rows.slice().sort((a, b) => dir * key(a).localeCompare(key(b), 'en', { numeric: true }) || a.deal.localeCompare(b.deal));
@@ -216,41 +216,30 @@ function detailPanel(r) {
     `Consent owner: ${r.owner || 'not set'}`, `Consent status: ${r.consentStatus || 'not set'}`,
   ].filter(Boolean).join('  |  ');
 
-  const clioBox = el('div', {}, el('h4', {}, 'Clio contacts'));
-  if (!r.clioMatterId) {
-    clioBox.append(el('p', { class: 'note' }, r.clioMatter
-      ? `This deal has Clio matter ${r.clioMatter} but no Clio Matter ID in HubSpot. Add the ID to look up its contacts.`
-      : 'No Clio Matter ID is set on this deal in HubSpot.'));
-  } else {
-    const c = state.clio.get(r.clioMatterId);
-    if (c && c.url) clioBox.firstChild.append(el('a', { href: c.url, target: '_blank', rel: 'noopener' }, `Open matter ${c.matter} in Clio`));
-    if (!c) clioBox.append(el('p', { class: 'loading' }, 'Loading contacts from Clio'));
-    else if (c.error) clioBox.append(el('p', { class: 'error' }, `Couldn’t load Clio contacts. ${c.error}`));
-    else if (!c.contacts.length) clioBox.append(el('p', { class: 'note' }, 'This matter has no contacts in Clio.'));
-    else clioBox.append(people(c.contacts, (p) => [`${p.role}${p.type ? `, ${p.type}` : ''}`, p.email, p.phone]));
-  }
+  const named = [
+    ['Plaintiff 1', r.plaintiff1], ['Plaintiff 2', r.plaintiff2], ['Point of contact', r.pointOfContact],
+  ].filter(([, name]) => name);
+  const plaintiffs = [r.plaintiff1, r.plaintiff2].filter(Boolean).map((n) => n.toLowerCase());
+  const contactBox = el('div', {}, el('h4', {}, 'Contacts'));
+  if (!named.length) contactBox.append(el('p', { class: 'note' }, 'No plaintiffs or point of contact are filled in on this deal in HubSpot.'));
+  else contactBox.append(people(named.map(([role, name]) => ({ name, role })), (p) => [
+    p.role === 'Point of contact' && plaintiffs.length && !plaintiffs.includes(p.name.toLowerCase()) ? 'Point of contact (not a plaintiff)' : p.role,
+  ]));
 
   return el('div', { class: 'panel' },
     el('div', { class: 'panel-head' },
       el('div', {}, el('h3', {}, r.deal), el('p', { class: 'facts' }, facts),
         el('p', { class: 'facts' }, el('a', { href: r.hubspotUrl, target: '_blank', rel: 'noopener' }, 'Open deal in HubSpot'))),
       el('button', { type: 'button', onclick: () => toggle(r.id) }, 'Close')),
-    el('div', { class: 'cols' }, clioBox));
+    el('div', { class: 'cols' }, contactBox));
 }
 
-async function toggle(id) {
+function toggle(id) {
   state.open = state.open === id ? null : id;
   render();
   if (!state.open) return;
-  const r = state.data[state.tab].rows.find((x) => x.id === id);
   const row = document.querySelector(`tr.row[data-id="${id}"]`);
   if (row) row.scrollIntoView({ block: 'nearest' });
-  const jobs = [];
-  if (r && r.clioMatterId && !state.clio.has(r.clioMatterId)) {
-    jobs.push(api(`/api/clio/${r.clioMatterId}/contacts`)
-      .then((b) => state.clio.set(r.clioMatterId, b), (e) => state.clio.set(r.clioMatterId, { error: e.message })));
-  }
-  for (const j of jobs) j.then(() => { if (state.open === id) render(); });
 }
 
 function downloadCsv() {
@@ -280,7 +269,7 @@ function wire() {
   $('f-closed').addEventListener('change', (e) => { f().hideClosed = e.target.checked; state.open = null; render(); });
   $('clear').addEventListener('click', () => { state.filters[state.tab] = {}; state.open = null; render(); });
   $('csv').addEventListener('click', downloadCsv);
-  $('refresh').addEventListener('click', () => { state.clio.clear(); load('prefiling', true); load('filed', true); });
+  $('refresh').addEventListener('click', () => { load('prefiling', true); load('filed', true); });
 
   const tbody = $('tbody');
   tbody.addEventListener('click', (e) => {

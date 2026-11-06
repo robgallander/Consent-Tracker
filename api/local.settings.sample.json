@@ -4,10 +4,6 @@
     "FUNCTIONS_WORKER_RUNTIME": "node",
     "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
     "HUBSPOT_PORTAL_ID": "8854200",
-    "CLIO_BASE_URL": "https://app.clio.com",
-    "CLIO_CLIENT_ID": "",
-    "CLIO_CLIENT_SECRET": "",
-    "CLIO_REFRESH_TOKEN": "",
     "CACHE_SECONDS": "60",
     "WEBHOOK_KEY": "paste-a-long-random-key",
     "STORAGE_CONNECTION_STRING": "memory"

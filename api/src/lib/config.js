@@ -18,13 +18,6 @@ module.exports = {
   // Azure Storage connection string. "memory" keeps deals in memory, for local testing only.
   storage: () => env('STORAGE_CONNECTION_STRING'),
 
-  clio: {
-    // US accounts use app.clio.com; EU, Canada and Australia accounts use eu., ca. or au.app.clio.com.
-    base: () => env('CLIO_BASE_URL', 'https://app.clio.com'),
-    clientId: () => env('CLIO_CLIENT_ID'),
-    clientSecret: () => env('CLIO_CLIENT_SECRET'),
-    refreshToken: () => env('CLIO_REFRESH_TOKEN'),
-  },
 
   // A deal is "complete" once its Consent Status (internal name consent__status) is one of these.
   completedConsentValues: ['Consent from ALL Parties', 'No Consent Needed'],
@@ -52,6 +45,7 @@ module.exports = {
     'hs_object_id', 'hs_lastmodifieddate', 'dealname', 'dealstage', 'pipeline', 'consent_owner', 'consent_status',
     'consent__status', 'retainer_received', 'all_parties_informed', 'risc_la_collected', 'government_id',
     'buyer_co_buyer_rep_needed', 'date_matter_filed', 'trial_date', 'matter_id', 'clio_matter',
+    'plaintiff_1', 'plaintiff_2', 'point_of_contact',
   ],
 
   cacheSeconds: Number(process.env.CACHE_SECONDS || 60),
