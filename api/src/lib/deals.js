@@ -32,20 +32,26 @@ function isOpen(p) {
   if (p.risc_la_collected !== 'Yes') return false; // only deals with the RISC/LA collected
   if (cfg.completedConsentValues.includes(p.consent__status)) return false;
   if (cfg.excludedStageIds.includes(p.dealstage)) return false;
-  const stage = (names.stages[p.dealstage] || '').toLowerCase();
-  if (cfg.excludedStageWords.some((w) => stage.includes(w))) return false;
   return true;
 }
 
+function isDropped(p) {
+  const stage = (names.stages[p.dealstage] || '').toLowerCase();
+  return cfg.droppedStageWords.some((w) => stage.includes(w));
+}
+
+// tab is 'prefiling', 'filed' or 'dropped'. Dropped deals show only on the Dropped tab, filed or not.
 function toRows(deals, tab, today = new Date()) {
   const filed = tab === 'filed';
+  const droppedTab = tab === 'dropped';
   const from = isoDay(today);
   const to = isoDay(new Date(today.getTime() + cfg.urgency.trialWindowDays * 864e5));
   const rows = [];
   for (const { id, props: p } of deals) {
     if (!isOpen(p)) continue;
     const dateFiled = day(p.date_matter_filed);
-    if (Boolean(dateFiled) !== filed) continue;
+    if (isDropped(p) !== droppedTab) continue;
+    if (!droppedTab && Boolean(dateFiled) !== filed) continue;
     const trial = day(p.trial_date);
     const settlement = p.pipeline === cfg.urgency.highPipelineId;
     const trialSoon = Boolean(trial) && trial >= from && trial <= to;
@@ -70,7 +76,7 @@ function toRows(deals, tab, today = new Date()) {
       plaintiff2: (p.plaintiff_2 || '').trim(),
       pointOfContact: (p.point_of_contact || '').trim(),
       clioMatterId: /^\d+$/.test(p.matter_id || '') ? p.matter_id : '',
-      urgency: settlement || trialSoon ? 'High' : filed ? 'Medium' : 'Low',
+      urgency: settlement || trialSoon ? 'High' : dateFiled ? 'Medium' : 'Low',
       urgencyReason: [settlement ? 'Settlement pipeline' : '', trialSoon ? `Trial ${trial}` : ''].filter(Boolean).join(', '),
       hubspotUrl: `https://app.hubspot.com/contacts/${cfg.hubspotPortalId()}/record/0-3/${id}`,
     });
@@ -78,4 +84,4 @@ function toRows(deals, tab, today = new Date()) {
   return rows;
 }
 
-module.exports = { parseWebhook, toRows, isOpen };
+module.exports = { parseWebhook, toRows, isOpen, isDropped };

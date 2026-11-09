@@ -23,17 +23,14 @@ module.exports = {
   completedConsentValues: ['Consent from ALL Parties', 'No Consent Needed'],
 
   // Deals in these stages never appear: Case Settled, Closed, Fee Motion, Demand Settled,
-  // Offer Letter Settled, Dismissed Case, Arbitration Closed, and every stage with "Drop" in its name.
+  // Offer Letter Settled, Dismissed Case, Arbitration Closed.
   excludedStageIds: [
     '148011378', '1084046343', '148011377',
     '261384983', '260423037', '266764713', '1067020160',
-    '96740002', '96720947', '1011509781', '131534098', '175430301', '175430302', '175432538',
-    '154582029', '31784861', '1020966176', '1032794017', '1058477443', '258278825', '965988692',
-    '978646565', '952781429', '155189872', '170672913',
   ],
-  // Safety net: a stage added later whose name contains one of these words is also left out
-  // (once its name is added to names.js).
-  excludedStageWords: ['drop'],
+  // A deal whose stage name contains one of these words is "dropped": it leaves the Pre-filing and
+  // Filed tabs and shows on the Dropped tab instead. A new drop stage is picked up once its name is in names.js.
+  droppedStageWords: ['drop'],
 
   urgency: {
     highPipelineId: '77637672', // Settlement

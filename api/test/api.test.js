@@ -47,6 +47,12 @@ test('webhook accepts flat and full-record formats', async () => {
     { hs_object_id: '5', dealname: 'Ed v. BMW', pipeline: '70128010', dealstage: '135842574', consent_owner: '82580535', consent__status: 'Consent from ALL Parties', date_matter_filed: '2026-01-01' },
     // no consent owner
     { hs_object_id: '6', dealname: 'Fi v. Kia', dealstage: '135842574' },
+    // dropped, filed: Dropped tab only
+    { hs_object_id: '11', risc_la_collected: 'Yes', dealname: 'Ky v. Ford', pipeline: '70128010', dealstage: '155189872', consent_owner: '82580535', date_matter_filed: '2026-03-01' },
+    // dropped, not filed: Dropped tab only
+    { hs_object_id: '12', risc_la_collected: 'Yes', dealname: 'Lu v. Kia', pipeline: '6906894', dealstage: '96740002', consent_owner: '82580535' },
+    // dropped but consent complete: hidden everywhere
+    { hs_object_id: '13', risc_la_collected: 'Yes', dealname: 'Mo v. GM', pipeline: '6906894', dealstage: '96740002', consent_owner: '82580535', consent__status: 'No Consent Needed' },
     // unknown owner and a past trial: Medium, shows ID
     { hs_object_id: '7', risc_la_collected: 'Yes', dealname: 'Gu v. Ford', pipeline: '70128010', dealstage: '1067020146', consent_owner: '99', date_matter_filed: '1767225600000', trial_date: '2020-01-01' },
   ];
@@ -87,13 +93,19 @@ test('filed tab: rules, names and urgency', async () => {
   assert.equal(rows['7'].urgency, 'Medium');
   assert.equal(rows['7'].owner, 'Owner 99');
   assert.equal(rows['7'].dateFiled, '2026-01-01');
-  assert.equal(res.jsonBody.storedDeals, 10);
+  assert.equal(res.jsonBody.storedDeals, 13);
   assert.ok(res.jsonBody.lastUpdate);
 });
 
 test('pre-filing tab', async () => {
   const res = await handlers.deals(getReq('/api/deals'), ctx);
   assert.deepEqual(res.jsonBody.rows.map((r) => [r.id, r.urgency, r.howConsent, r.stage]), [['3', 'Low', 'Call', 'RO Summary']]);
+});
+
+test('dropped tab: deals in any stage with "Drop" in its name, filed or not', async () => {
+  const res = await handlers.deals(getReq('/api/deals?tab=dropped'), ctx);
+  assert.deepEqual(res.jsonBody.rows.map((r) => [r.id, r.urgency, r.stage]).sort(),
+    [['11', 'Medium', 'Drop Case (Repurchase)'], ['12', 'Low', 'Drop Case (Non-Responsive)']]);
 });
 
 test('only invited people can read deals', async () => {

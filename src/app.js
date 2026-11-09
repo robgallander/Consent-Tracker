@@ -13,22 +13,25 @@ COLUMNS.filed = [
   ['dateFiled', 'Date filed', 'Deal'], ['trialDate', 'Trial date', 'Deal'], ['clioMatter', 'Clio matter', 'Deal'],
   ...COLUMNS.prefiling.slice(4),
 ];
+COLUMNS.dropped = COLUMNS.filed;
+const TABS = ['prefiling', 'filed', 'dropped'];
 
 const RULES = {
   prefiling: 'Deals with a Consent Owner, RISC/LA Collected, and no Date Matter Filed whose Consent Status isn’t yet “ALL Parties Consented” or “No Consent Needed”. Urgency is High in the Settlement pipeline or with a trial in the next 90 days, otherwise Low.',
   filed: 'Deals with a Consent Owner, RISC/LA Collected, and a Date Matter Filed whose Consent Status isn’t yet “ALL Parties Consented” or “No Consent Needed”. Urgency is High in the Settlement pipeline or with a trial in the next 90 days, otherwise Medium.',
+  dropped: 'Deals in any stage with “Drop” in its name that have a Consent Owner and RISC/LA Collected and whose Consent Status isn’t yet “ALL Parties Consented” or “No Consent Needed”, filed or not. These deals don’t appear on the other two tabs. Urgency is High with a trial in the next 90 days, otherwise Medium if filed and Low if not.',
 };
 const RANK = { High: 0, Medium: 1, Low: 2 };
 const fmt = new Intl.NumberFormat('en-US');
 const $ = (id) => document.getElementById(id);
 
 const state = {
-  tab: location.hash === '#filed' ? 'filed' : 'prefiling',
+  tab: TABS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'prefiling',
   data: {},
   errors: {},
   open: null,
-  filters: { prefiling: {}, filed: {} },
-  sort: { prefiling: { col: 'urgency', dir: 1 }, filed: { col: 'urgency', dir: 1 } },
+  filters: Object.fromEntries(TABS.map((t) => [t, {}])),
+  sort: Object.fromEntries(TABS.map((t) => [t, { col: 'urgency', dir: 1 }])),
 };
 
 function el(tag, attrs = {}, ...children) {
@@ -94,7 +97,7 @@ function render() {
 
   for (const b of document.querySelectorAll('.tabs button')) b.setAttribute('aria-selected', String(b.dataset.tab === tab));
   $('panel').setAttribute('aria-labelledby', `tab-${tab}`);
-  for (const t of ['prefiling', 'filed']) {
+  for (const t of TABS) {
     document.querySelector(`[data-count="${t}"]`).textContent = state.data[t] ? fmt.format(state.data[t].rows.length) : '';
   }
   $('rule').textContent = RULES[tab];
@@ -257,7 +260,7 @@ function wire() {
   for (const b of document.querySelectorAll('.tabs button')) {
     b.addEventListener('click', () => {
       state.tab = b.dataset.tab; state.open = null;
-      history.replaceState(null, '', state.tab === 'filed' ? '#filed' : '#');
+      history.replaceState(null, '', state.tab === 'prefiling' ? '#' : `#${state.tab}`);
       render();
     });
   }
@@ -269,7 +272,7 @@ function wire() {
   $('f-closed').addEventListener('change', (e) => { f().hideClosed = e.target.checked; state.open = null; render(); });
   $('clear').addEventListener('click', () => { state.filters[state.tab] = {}; state.open = null; render(); });
   $('csv').addEventListener('click', downloadCsv);
-  $('refresh').addEventListener('click', () => { load('prefiling', true); load('filed', true); });
+  $('refresh').addEventListener('click', () => { for (const t of TABS) load(t, true); });
 
   const tbody = $('tbody');
   tbody.addEventListener('click', (e) => {
@@ -294,5 +297,4 @@ async function who() {
 wire();
 render();
 who();
-load('prefiling');
-load('filed');
+for (const t of TABS) load(t);

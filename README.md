@@ -7,10 +7,12 @@ the Azure portal can open it.
 The rules match the Claude dashboard it's modeled on:
 
 - **Pre-filing** and **Filed cases** tabs. A deal is filed once *Date Matter Filed* is set.
+- A **Dropped** tab for deals in any stage with "Drop" in its name, filed or not. Dropped deals show only
+  there, not on the other two tabs.
 - A deal appears when *Consent Owner* is set and *RISC/LA Collected* is Yes, and drops off once
   *Consent Status* is "ALL Parties Consented" or "No Consent Needed".
-- Deals at Case Settled, Closed, Fee Motion, Demand Settled, Offer Letter Settled, Dismissed Case,
-  Arbitration Closed, or any stage with "Drop" in its name are left out.
+- Deals at Case Settled, Closed, Fee Motion, Demand Settled, Offer Letter Settled, Dismissed Case or
+  Arbitration Closed are left out.
 - **Urgency** is High in the Settlement pipeline or with a trial in the next 90 days; otherwise
   Medium for filed cases and Low for pre-filing.
 - The Contacts columns show *Plaintiff 1*, *Plaintiff 2* and *Point of Contact*; selecting a deal opens
@@ -173,8 +175,8 @@ HubSpot sends internal values, so `api/src/lib/names.js` lists the names behind 
 **consent owner, stage, pipeline or dropdown option** in HubSpot, add it there and push to `main`. Until
 then the site still works: it shows the raw value (for example "Owner 12345678") instead of the name.
 
-A new stage with "Drop" in its name is left out automatically once its name is in `names.js`; to leave
-out any other new stage, add its ID to `excludedStageIds` in `config.js`.
+A new stage with "Drop" in its name moves to the Dropped tab automatically once its name is in `names.js`;
+to leave out any other new stage, add its ID to `excludedStageIds` in `config.js`.
 
 ## Good to know
 
