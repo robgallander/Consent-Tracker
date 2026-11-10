@@ -245,17 +245,6 @@ function toggle(id) {
   if (row) row.scrollIntoView({ block: 'nearest' });
 }
 
-function downloadCsv() {
-  const tab = state.tab;
-  const cols = COLUMNS[tab];
-  const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const lines = [cols.map(([, label]) => esc(label)).join(','), ...rowsFor(tab).map((r) => cols.map(([k]) => esc(r[k])).join(','))];
-  const url = URL.createObjectURL(new Blob([lines.join('\r\n')], { type: 'text/csv' }));
-  const a = el('a', { href: url, download: `consent-tracker-${tab}-${new Date().toISOString().slice(0, 10)}.csv` });
-  document.body.append(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
 function wire() {
   for (const b of document.querySelectorAll('.tabs button')) {
     b.addEventListener('click', () => {
@@ -271,7 +260,6 @@ function wire() {
   $('f-status').addEventListener('change', (e) => { f().status = e.target.value; state.open = null; render(); });
   $('f-closed').addEventListener('change', (e) => { f().hideClosed = e.target.checked; state.open = null; render(); });
   $('clear').addEventListener('click', () => { state.filters[state.tab] = {}; state.open = null; render(); });
-  $('csv').addEventListener('click', downloadCsv);
   $('refresh').addEventListener('click', () => { for (const t of TABS) load(t, true); });
 
   const tbody = $('tbody');
